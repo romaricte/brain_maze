@@ -1,0 +1,76 @@
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'dart:io';
+
+class AdService {
+  static InterstitialAd? _interstitialAd;
+  static RewardedAd? _rewardedAd;
+
+  // ⚠️ REMPLACEZ par vos vrais IDs AdMob !
+  static String get _interstitialId => Platform.isAndroid
+      ? 'ca-app-pub-3940256099942544/1033173712'  // Test ID
+      : 'ca-app-pub-3940256099942544/4411468910';  // Test ID
+
+  static String get _rewardedId => Platform.isAndroid
+      ? 'ca-app-pub-3940256099942544/5224354917'   // Test ID
+      : 'ca-app-pub-3940256099942544/1712485313';   // Test ID
+
+  static Future<void> init() async {
+    await MobileAds.instance.initialize();
+    _loadInterstitial();
+    _loadRewarded();
+  }
+
+  // Interstitial
+  static void _loadInterstitial() {
+    InterstitialAd.load(
+      adUnitId: _interstitialId,
+      request: const AdRequest(),
+      adLoadCallback: InterstitialAdLoadCallback(
+        onAdLoaded: (ad) => _interstitialAd = ad,
+        onAdFailedToLoad: (error) => _interstitialAd = null,
+      ),
+    );
+  }
+
+  static void showInterstitial() {
+    if (_interstitialAd != null) {
+      _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
+        onAdDismissedFullScreenContent: (ad) {
+          ad.dispose();
+          _loadInterstitial();
+        },
+      );
+      _interstitialAd!.show();
+      _interstitialAd = null;
+    }
+  }
+
+  // Rewarded (pour les hints)
+  static void _loadRewarded() {
+    RewardedAd.load(
+      adUnitId: _rewardedId,
+      request: const AdRequest(),
+      rewardedAdLoadCallback: RewardedAdLoadCallback(
+        onAdLoaded: (ad) => _rewardedAd = ad,
+        onAdFailedToLoad: (error) => _rewardedAd = null,
+      ),
+    );
+  }
+
+  static void showRewarded({required Function() onReward}) {
+    if (_rewardedAd != null) {
+      _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
+        onAdDismissedFullScreenContent: (ad) {
+          ad.dispose();
+          _loadRewarded();
+        },
+      );
+      _rewardedAd!.show(
+        onUserEarnedReward: (ad, reward) => onReward(),
+      );
+      _rewardedAd = null;
+    }
+  }
+
+  static bool get isRewardedReady => _rewardedAd != null;
+}
