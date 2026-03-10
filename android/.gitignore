@@ -12,3 +12,8 @@ GeneratedPluginRegistrant.java
 key.properties
 **/*.keystore
 **/*.jks
+
+# Clé de signature — NE JAMAIS PARTAGER
+android/key.properties
+android/app/upload-keystore.jks
+*.jks

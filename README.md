@@ -61,3 +61,24 @@ Description longue :
 
 Catégorie : Jeux > Puzzle
 Classification : Tout public (PEGI 3)
+
+
+
+Méthode professionnelle (recommandée Flutter)
+
+Utilise l’outil :
+
+dart run change_app_package_name:main com.brainmaze.game
+
+Plugin :
+
+dev_dependencies:
+  change_app_package_name: ^1.1.0
+
+Cela change tout automatiquement.
+
+
+pour les keys signer ton app Flutter/Android (Play Store) :
+
+
+keytool -genkeypair -v -keystore upload-keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload

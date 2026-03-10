@@ -119,7 +119,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     SizedBox(height: 4),
                     Text(
-                      "Made with Flutter & Flame 🔥",
+                      "Made By laroma_dev",
                       style: TextStyle(
                         color: AppColors.neonBlue,
                         fontSize: 12,
