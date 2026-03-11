@@ -3,52 +3,79 @@ import 'dart:ui';
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
+import '../../core/constants.dart';
 
 class Goal extends CircleComponent with CollisionCallbacks {
-  double _pulseTime = 0;
-  final double _pulseSpeed = 3.0;
+  double _time = 0;
+  final List<_GoalParticle> _particles = [];
 
   Goal({required Vector2 position})
       : super(
           position: position,
-          radius: 18,
+          radius: GameConstants.goalRadius,
           anchor: Anchor.center,
           priority: 5,
-        );
+        ) {
+    // Générer des particules orbitales
+    final random = Random();
+    for (int i = 0; i < 6; i++) {
+      _particles.add(_GoalParticle(
+        angle: random.nextDouble() * 2 * pi,
+        speed: 1.5 + random.nextDouble() * 1.5,
+        distance: radius + 8 + random.nextDouble() * 10,
+        size: 1.5 + random.nextDouble() * 2,
+      ));
+    }
+  }
 
   @override
   Future<void> onLoad() async {
-    add(CircleHitbox());
+    add(CircleHitbox(radius: radius * 0.9));
   }
 
   @override
   void update(double dt) {
     super.update(dt);
-    _pulseTime += dt * _pulseSpeed;
+    _time += dt;
+
+    for (var p in _particles) {
+      p.angle += dt * p.speed;
+    }
   }
 
   @override
   void render(Canvas canvas) {
-    final pulse = (sin(_pulseTime) + 1) / 2; // 0 to 1
+    final pulse = (sin(_time * GameConstants.pulseSpeed) + 1) / 2;
 
-    // Glow externe pulsant
+    // Glow pulsant
     canvas.drawCircle(
       Offset.zero,
-      radius + 15 + pulse * 8,
+      radius + 18 + pulse * 8,
       Paint()
-        ..color = const Color(0xFF00FF87).withOpacity(0.1 + pulse * 0.1)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 20),
+        ..color = const Color(0xFF00FF87).withOpacity(0.08 + pulse * 0.08)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 25),
     );
+
+    // Particules orbitales
+    for (var p in _particles) {
+      canvas.drawCircle(
+        Offset(cos(p.angle) * p.distance, sin(p.angle) * p.distance),
+        p.size,
+        Paint()
+          ..color = const Color(0xFF00FF87).withOpacity(0.7)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2),
+      );
+    }
 
     // Anneau externe
     canvas.drawCircle(
       Offset.zero,
-      radius + 5,
+      radius + 4,
       Paint()
-        ..color = const Color(0xFF00FF87).withOpacity(0.3)
+        ..color = const Color(0xFF00FF87).withOpacity(0.25 + pulse * 0.15)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 2
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+        ..strokeWidth = 1.5
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
     );
 
     // Cercle principal
@@ -57,32 +84,37 @@ class Goal extends CircleComponent with CollisionCallbacks {
       radius,
       Paint()
         ..shader = const RadialGradient(
-          colors: [
-            Color(0xFFFFFFFF),
-            Color(0xFF00FF87),
-            Color(0xFF00AA55),
-          ],
+          colors: [Color(0xFFFFFFFF), Color(0xFF00FF87), Color(0xFF00AA55)],
           stops: [0.0, 0.4, 1.0],
         ).createShader(Rect.fromCircle(center: Offset.zero, radius: radius)),
     );
 
-    // Étoile au centre
-    _drawStar(canvas, pulse);
+    // Étoile au centre (tourne)
+    _drawRotatingStar(canvas, pulse);
+
+    // Reflet
+    canvas.drawCircle(
+      const Offset(-4, -4),
+      radius * 0.2,
+      Paint()..color = Colors.white.withOpacity(0.6),
+    );
   }
 
-  void _drawStar(Canvas canvas, double pulse) {
-    final starPaint = Paint()..color = Colors.white.withOpacity(0.9);
-    final starSize = 6.0 + pulse * 2;
+  void _drawRotatingStar(Canvas canvas, double pulse) {
+    canvas.save();
+    canvas.rotate(_time * 0.5);
+
+    final starSize = 5.0 + pulse * 2;
     final path = Path();
 
     for (int i = 0; i < 5; i++) {
-      final angle = (i * 72 - 90) * pi / 180;
+      final outerAngle = (i * 72 - 90) * pi / 180;
       final innerAngle = ((i * 72) + 36 - 90) * pi / 180;
 
       if (i == 0) {
-        path.moveTo(cos(angle) * starSize, sin(angle) * starSize);
+        path.moveTo(cos(outerAngle) * starSize, sin(outerAngle) * starSize);
       } else {
-        path.lineTo(cos(angle) * starSize, sin(angle) * starSize);
+        path.lineTo(cos(outerAngle) * starSize, sin(outerAngle) * starSize);
       }
       path.lineTo(
         cos(innerAngle) * starSize * 0.4,
@@ -90,6 +122,25 @@ class Goal extends CircleComponent with CollisionCallbacks {
       );
     }
     path.close();
-    canvas.drawPath(path, starPaint);
+
+    canvas.drawPath(
+      path,
+      Paint()..color = Colors.white.withOpacity(0.9),
+    );
+    canvas.restore();
   }
+}
+
+class _GoalParticle {
+  double angle;
+  final double speed;
+  final double distance;
+  final double size;
+
+  _GoalParticle({
+    required this.angle,
+    required this.speed,
+    required this.distance,
+    required this.size,
+  });
 }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../core/theme.dart';
-import 'package:brain_maze/levels/level_data.dart';
+import 'package:brain_maze/game/levels/level_data.dart';
 import 'package:brain_maze/services/storage_service.dart';
 import '../widgets/star_display.dart';
 import 'game_screen.dart';
